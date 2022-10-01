@@ -1,9 +1,6 @@
 # Node
 node_modules/
 
-# Typescript
-/dist/
-
 # Env
 *.env*
 !schema.env
