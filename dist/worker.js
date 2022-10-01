@@ -12,6 +12,7 @@
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const config = {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.5249.91 Safari/537.36',
+    acceptHeader: 'video/mp4, video/webm;q=0.9, image/jpeg, image/png, image/gif;q=0.8, application/octet-stream;q=0.7, */*;q=0.6, text/html;q=0.5',
 };
 exports["default"] = config;
 
@@ -32,15 +33,20 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.image = void 0;
 const jsonError_1 = __webpack_require__(/*! ../jsonError */ "./src/jsonError.ts");
 const config_1 = __importDefault(__webpack_require__(/*! ../config */ "./src/config.ts"));
-async function image(id, event) {
-    const url = `https://i.imgur.com/${id}`;
+async function image(uri, event) {
+    let id = uri.pathname.substring(1);
+    let url = `https://i.imgur.com/${id}`;
     const cache = caches.default;
     const options = {
         headers: {
             'User-Agent': config_1.default.userAgent,
-            Accept: 'video/mp4, video/webm;q=0.9, image/jpeg, image/png, image/gif;q=0.8, application/octet-stream;q=0.7, */*;q=0.6, text/html;q=0.5',
+            Accept: config_1.default.acceptHeader,
         },
     };
+    if (id.includes('.gifv')) {
+        id = id.replace('.gifv', '.mp4');
+        return Response.redirect(`${uri.origin}/${id}`);
+    }
     let response = await cache.match(url);
     if (!response) {
         const imageResponse = await fetch(url, options);
@@ -64,6 +70,9 @@ async function image(id, event) {
             return (0, jsonError_1.jsonError)('Not found', 404);
         }
     }
+    if (response?.url?.includes('.mp4')) {
+        response.headers.set('content-type', 'video/mp4');
+    }
     return response;
 }
 exports.image = image;
@@ -84,12 +93,12 @@ const image_1 = __webpack_require__(/*! ./fetch/image */ "./src/fetch/image.ts")
 const jsonError_1 = __webpack_require__(/*! ./jsonError */ "./src/jsonError.ts");
 async function handleRequest(event) {
     const { request } = event;
-    const url = new URL(request.url);
-    const path = url.pathname.substring(1);
+    const uri = new URL(request.url);
+    const path = uri.pathname.substring(1);
     try {
         if (!path)
             return (0, jsonError_1.jsonError)('No Filename', 406);
-        return await (0, image_1.image)(path, event);
+        return await (0, image_1.image)(uri, event);
     }
     catch (err) {
         return (0, jsonError_1.jsonError)(err.toString(), 500);
