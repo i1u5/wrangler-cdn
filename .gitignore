@@ -7,3 +7,6 @@ node_modules/
 
 # Dotfiles
 .cache
+
+# Per user conf
+wrangler.toml
