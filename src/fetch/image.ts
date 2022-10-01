@@ -1,15 +1,22 @@
 import { jsonError } from '../jsonError'
 import config from '../config'
 
-export async function image(id: string, event: FetchEvent): Promise<Response> {
-    const url = `https://i.imgur.com/${id}`
+export async function image(uri: URL, event: FetchEvent): Promise<Response> {
+    let id = uri.pathname.substring(1)
+
+    let url = `https://i.imgur.com/${id}`
     const cache = caches.default
 
     const options = {
         headers: {
             'User-Agent': config.userAgent,
-            Accept: 'video/mp4, video/webm;q=0.9, image/jpeg, image/png, image/gif;q=0.8, application/octet-stream;q=0.7, */*;q=0.6, text/html;q=0.5',
+            Accept: config.acceptHeader,
         },
+    }
+
+    if (id.includes('.gifv')) {
+        id = id.replace('.gifv', '.mp4')
+        return Response.redirect(`${uri.origin}/${id}`)
     }
 
     let response = await cache.match(url)
@@ -40,6 +47,10 @@ export async function image(id: string, event: FetchEvent): Promise<Response> {
         } else {
             return jsonError('Not found', 404)
         }
+    }
+
+    if (response?.url?.includes('.mp4')) {
+        response.headers.set('content-type', 'video/mp4')
     }
 
     return response
