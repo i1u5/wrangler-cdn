@@ -8,6 +8,7 @@ export async function image(id: string, event: FetchEvent): Promise<Response> {
     const options = {
         headers: {
             'User-Agent': config.userAgent,
+            Accept: 'video/mp4, video/webm;q=0.9, image/jpeg, image/png, image/gif;q=0.8, application/octet-stream;q=0.7, */*;q=0.6, text/html;q=0.5',
         },
     }
 
